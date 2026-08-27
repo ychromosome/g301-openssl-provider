@@ -1,0 +1,39 @@
+[package]
+name = "g301-inner-threads"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+publish = false
+description = "Experimental G301 v0.1 inner-thread session core"
+license-file = "LICENSE"
+
+[features]
+default = []
+test-vectors = []
+
+[lib]
+name = "g301_inner_threads"
+path = "src/lib.rs"
+
+[dependencies]
+openssl = "=0.10.81"
+zeroize = "=1.9.0"
+
+[dev-dependencies]
+criterion = { version = "=0.8.2", default-features = false, features = ["cargo_bench_support"] }
+hex = "=0.4.3"
+
+[[bench]]
+name = "core"
+harness = false
+required-features = ["test-vectors"]
+
+[[test]]
+name = "negative"
+path = "tests/negative.rs"
+required-features = ["test-vectors"]
+
+[[test]]
+name = "session"
+path = "tests/session.rs"
+required-features = ["test-vectors"]
