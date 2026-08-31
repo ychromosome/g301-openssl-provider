@@ -523,10 +523,12 @@ static int g301_get_encryption_tag(G301_CIPHER_CTX *ctx, OSSL_PARAM *param)
     inner_params[1] = OSSL_PARAM_construct_end();
     ok = ctx->ops->get_params(ctx->inner, inner_params);
     if (!ok) {
+        g301_poison(ctx);
         OPENSSL_cleanse(private_tag, sizeof(private_tag));
         return 0;
     }
     if (inner_params[0].return_size != G301_TAG_LENGTH) {
+        g301_poison(ctx);
         OPENSSL_cleanse(private_tag, sizeof(private_tag));
         G301_RAISE(ctx, G301_R_INTERNAL_ERROR);
         return 0;

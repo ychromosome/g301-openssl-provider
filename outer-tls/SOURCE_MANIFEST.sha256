@@ -30,7 +30,7 @@ abf17f103c0688693a24d78f51f06a74c6f28461b90e89c7ab9f3f96a2d44abe  ./scripts/comm
 b1e221964789e95bb8ee2c2583e9388d94d22e2a28466428b0432d8eaac69c41  ./scripts/run-allocation-failure.sh
 cd8edf22ad9bdd57199ad95824bd253c87e890f57fe7421ff4193e9e739120b8  ./scripts/run-assurance-lane.sh
 593cc443894ae06b24da0273ef060744ccb964d03a2b04a867feb537189c9d37  ./scripts/run-provider-lane.sh
-fc5984779a5197aaac6dfa159e322223a62bb0d2a310898da9ebe6a38f983d4f  ./src/g301_cipher.c
+27d6d77fb911c5d75322dcba9339f4bd69fd978766efca08bea5b293a919d74f  ./src/g301_cipher.c
 14a54238019f26af759c712401d9bf33aff717745c3ea5be329fc286e8a0b6c5  ./src/g301_inner_evp.c
 e8fae129491fbbe99e2aa2cff9c899bb3f683cab6dd2cadfe59988b7acdf597c  ./src/g301_internal.h
 e2ed042c74617808610b23b15c679f6d01e224bbea74457e29f5094eeff1b09c  ./src/g301_provider.c
@@ -45,4 +45,4 @@ abc4715e6fa366360e948a4ee806c0357556fb7471dfba2044f96617a3b56be6  ./tests/test_i
 d99a378b91633405c19ecf0f8b1130d4b4911bbb95cc99fdc506531b43607ffc  ./tests/test_mbedtls_oracle.c
 cf4543bbdf2e96845acb4cebcb6ca94f429f0f078a457cdbe23c500905725dc7  ./tests/test_param_policy.c
 429788e75fd2fb9614dec973ddaeb4a230f79f071d2f6196a61a619028e5a3d2  ./tests/test_private_tls_e2e.c
-fb9ca1a9743b38e6770a38d0a67f63278216931c735d5cab34142abde808d478  ./tests/test_state_machine.c
+e1a7af53a3cfbc44f6135b8ae0b8a6d6df877269241d9a4f52292be44989398d  ./tests/test_state_machine.c

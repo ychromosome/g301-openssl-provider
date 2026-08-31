@@ -476,14 +476,20 @@ static int test_fixed_tag_private_copy(void)
     CHECK(fixture.get_calls == 1);
     for (i = 0; i < sizeof(output); i++)
         CHECK(output[i] == 0x5a);
+    CHECK(!get_current_tag(ctx, output));
+    CHECK(fixture.get_calls == 1);
 
+    CHECK(begin_encrypt(ctx) && finalize_encrypt(ctx));
     fixture.get_return_size = 15;
     CHECK(!get_current_tag(ctx, output));
     CHECK(fixture.last_reason == G301_R_INTERNAL_ERROR);
     CHECK(fixture.get_calls == 2);
     for (i = 0; i < sizeof(output); i++)
         CHECK(output[i] == 0x5a);
+    CHECK(!get_current_tag(ctx, output));
+    CHECK(fixture.get_calls == 2);
 
+    CHECK(begin_encrypt(ctx) && finalize_encrypt(ctx));
     fixture.get_return_size = 16;
     CHECK(get_current_tag(ctx, output));
     CHECK(fixture.get_calls == 3);
