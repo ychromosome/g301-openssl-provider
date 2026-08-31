@@ -108,19 +108,17 @@ end:
 }
 
 static int configure_tls_contexts(OSSL_LIB_CTX *libctx,
-    OSSL_PROVIDER *g301_provider, X509 *certificate,
-    EVP_PKEY *private_key, SSL_CTX **client_ctx_out,
-    SSL_CTX **server_ctx_out)
+    X509 *certificate, EVP_PKEY *private_key,
+    SSL_CTX **client_ctx_out, SSL_CTX **server_ctx_out)
 {
     SSL_CTX *client_ctx = NULL;
     SSL_CTX *server_ctx = NULL;
     int ok = 0;
 
+    /* Provider ciphersuites are discovered when each SSL_CTX is created. */
     client_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
     server_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     if (client_ctx == NULL || server_ctx == NULL
-        || SSL_CTX_add_provider_ciphersuites(client_ctx, g301_provider) <= 0
-        || SSL_CTX_add_provider_ciphersuites(server_ctx, g301_provider) <= 0
         || SSL_CTX_set_min_proto_version(client_ctx, TLS1_3_VERSION) <= 0
         || SSL_CTX_set_max_proto_version(client_ctx, TLS1_3_VERSION) <= 0
         || SSL_CTX_set_min_proto_version(server_ctx, TLS1_3_VERSION) <= 0
@@ -414,8 +412,7 @@ int main(int argc, char **argv)
             &default_provider)
         || !load_provider_from(libctx, argv[1], "g301", &g301_provider)
         || !make_server_identity(libctx, &certificate, &private_key)
-        || !configure_tls_contexts(libctx, g301_provider, certificate,
-            private_key,
+        || !configure_tls_contexts(libctx, certificate, private_key,
             &client_ctx, &server_ctx)
         || !make_ssl_pair(client_ctx, server_ctx, &client, &server)
         || !drive_handshake(client, server)

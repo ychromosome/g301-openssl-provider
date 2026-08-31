@@ -73,7 +73,7 @@ Inner operational failures poison the context until complete reinitialization.
 
 ## Experimental TLS descriptor
 
-Capability name: `TLS-CIPHERSUITE-V1`. The descriptor contains exactly:
+Capability name: `TLS-CIPHERSUITE`. The descriptor contains exactly:
 
 | Field | Value |
 |---|---|
