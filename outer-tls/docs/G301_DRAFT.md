@@ -69,7 +69,8 @@ A successful key/IV initialization enters `MANIFEST_PENDING`. The first
 non-empty AAD or payload update, or final on an otherwise empty record, injects
 `M` once and enters `ACTIVE`. AAD after payload is rejected. Final can run once.
 Decryption final requires a fresh exact 16-byte tag for the current record.
-Inner operational failures poison the context until complete reinitialization.
+Every failed Final poisons the record. Inner operational failures do the same.
+Only a successful IV-bearing reinitialization permits another record.
 
 ## Experimental TLS descriptor
 

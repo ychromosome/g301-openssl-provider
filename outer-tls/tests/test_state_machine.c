@@ -431,12 +431,27 @@ static int test_tag_freshness(void)
 
     CHECK(g301_test_cipher_decrypt_init(ctx, NULL, 0, iv_b, sizeof(iv_b),
         NULL));
+    CHECK(set_current_tag(ctx, tag));
+    before_final = fixture.final_calls;
+    CHECK(!g301_test_cipher_final(ctx, NULL, NULL, 0));
+    CHECK(!g301_test_cipher_final(ctx, NULL, &outl, 0));
+    CHECK(fixture.final_calls == before_final);
+    CHECK(!set_current_tag(ctx, tag));
+
+    CHECK(g301_test_cipher_decrypt_init(ctx, NULL, 0, iv_b, sizeof(iv_b),
+        NULL));
     before_update = fixture.update_calls;
     before_final = fixture.final_calls;
     CHECK(!g301_test_cipher_final(ctx, NULL, &outl, 0));
     CHECK(fixture.update_calls == before_update
         && fixture.final_calls == before_final);
-    CHECK(set_current_tag(ctx, tag));
+    CHECK(!set_current_tag(ctx, tag));
+    CHECK(!g301_test_cipher_final(ctx, NULL, &outl, 0));
+    CHECK(fixture.update_calls == before_update
+        && fixture.final_calls == before_final);
+
+    CHECK(g301_test_cipher_decrypt_init(ctx, NULL, 0, iv_b, sizeof(iv_b),
+        NULL));
 
     {
         unsigned char tag2[16] = { 1 };
@@ -447,9 +462,6 @@ static int test_tag_freshness(void)
         };
         CHECK(!g301_test_cipher_set_ctx_params(ctx, duplicate));
     }
-    CHECK(!g301_test_cipher_final(ctx, NULL, &outl, 0));
-    CHECK(fixture.update_calls == before_update
-        && fixture.final_calls == before_final);
     CHECK(set_current_tag(ctx, tag));
     CHECK(g301_test_cipher_final(ctx, NULL, &outl, 0));
     ok = 1;
@@ -923,6 +935,8 @@ static int test_denylist_tag_ordering(void)
     CHECK(!g301_test_cipher_final(ctx, NULL, &outl, 0));
     CHECK(fixture.update_calls == update_before
         && fixture.final_calls == final_before);
+    CHECK(g301_test_cipher_decrypt_init(ctx, NULL, 0, iv_b, sizeof(iv_b),
+        NULL));
     CHECK(set_current_tag(ctx, tag));
     CHECK(g301_test_cipher_final(ctx, NULL, &outl, 0));
 

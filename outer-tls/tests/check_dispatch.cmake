@@ -31,7 +31,6 @@ foreach(name
         OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED
         OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV
         OSSL_CIPHER_PARAM_AEAD_MAC_KEY
-        OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN
@@ -51,6 +50,14 @@ foreach(name
             "expected exactly one explicit fail-closed legacy denylist entry for ${name}, got ${count}")
     endif()
 endforeach()
+
+string(REGEX MATCHALL "G301_CIPHER_PARAM_PIPELINE_AEAD_TAG[^A-Z0-9_]"
+    matches "${source}")
+list(LENGTH matches count)
+if(NOT count EQUAL 2)
+    message(FATAL_ERROR
+        "expected one definition and one denylist use for the pipeline tag name, got ${count}")
+endif()
 
 string(REGEX MATCHALL "G301_CIPHER_PARAM_ENCRYPT_THEN_MAC[^A-Z0-9_]"
     matches "${source}")

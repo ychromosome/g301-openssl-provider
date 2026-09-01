@@ -13,6 +13,8 @@
 
 /* Public cipher parameter added by OpenSSL 4; reject it on ABI 3 as well. */
 #define G301_CIPHER_PARAM_ENCRYPT_THEN_MAC "encrypt-then-mac"
+/* Public on newer OpenSSL; retain the wire spelling for ABI-3 denylisting. */
+#define G301_CIPHER_PARAM_PIPELINE_AEAD_TAG "pipeline-tag"
 
 typedef enum g301_phase_st {
     G301_PHASE_NO_RECORD = 0,
@@ -101,7 +103,7 @@ static int g301_has_forbidden_legacy_param(const OSSL_PARAM params[])
         OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN,
         OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
         OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV,
-        OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG,
+        G301_CIPHER_PARAM_PIPELINE_AEAD_TAG,
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK,
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD,
         OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN,
@@ -426,11 +428,17 @@ static int g301_cipher_final(void *vctx, unsigned char *out, size_t *outl,
 
     (void)out;
     (void)outsize;
-    if (outl == NULL)
-        return 0;
-    *outl = 0;
     if (ctx == NULL)
         return 0;
+    if (outl == NULL) {
+        if (!ctx->needs_reinit
+            && (ctx->phase == G301_PHASE_MANIFEST_PENDING
+                || ctx->phase == G301_PHASE_ACTIVE))
+            g301_poison(ctx);
+        G301_RAISE(ctx, G301_R_INVALID_PARAMETER);
+        return 0;
+    }
+    *outl = 0;
     if (ctx->needs_reinit
         || ctx->phase == G301_PHASE_NO_RECORD
         || ctx->phase == G301_PHASE_FINALIZED) {
@@ -438,6 +446,7 @@ static int g301_cipher_final(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
     if (!ctx->encrypt && !ctx->decrypt_tag_current) {
+        g301_poison(ctx);
         G301_RAISE(ctx, G301_R_INVALID_STATE);
         return 0;
     }
@@ -735,7 +744,7 @@ const OSSL_DISPATCH g301_cipher_functions[] = {
         (void (*)(void))g301_cipher_gettable_ctx_params },
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
         (void (*)(void))g301_cipher_settable_ctx_params },
-    OSSL_DISPATCH_END
+    { 0, NULL }
 };
 
 #ifdef G301_TESTING

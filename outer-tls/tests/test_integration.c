@@ -480,10 +480,9 @@ static int test_lifecycle(EVP_CIPHER *cipher)
               (int)sizeof(ciphertext1))
         > 0);
     CHECK(EVP_DecryptFinal_ex(ctx, output, &outl) <= 0);
-    CHECK(set_tag(ctx, tag1));
-    CHECK(EVP_DecryptFinal_ex(ctx, output + sizeof(ciphertext1), &outl) > 0);
-    CHECK(EVP_DecryptInit_ex2(ctx, NULL, NULL, iv, NULL) > 0);
+    CHECK(!set_tag(ctx, tag1));
     CHECK(EVP_DecryptFinal_ex(ctx, output, &outl) <= 0);
+    CHECK(EVP_DecryptInit_ex2(ctx, NULL, NULL, iv, NULL) > 0);
     CHECK(set_tag(ctx, tag1));
     CHECK(EVP_DecryptUpdate(ctx, NULL, &outl, aad1, (int)sizeof(aad1)) > 0);
     CHECK(EVP_DecryptUpdate(ctx, output, &outl, ciphertext1,
@@ -1180,7 +1179,11 @@ static int test_dupctx_clean_failure(EVP_CIPHER *cipher)
     CHECK(ctx != NULL);
     CHECK(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL) > 0);
     CHECK(EVP_EncryptUpdate(ctx, NULL, &outl, aad1, (int)sizeof(aad1)) > 0);
-    duplicate = EVP_CIPHER_CTX_dup(ctx);
+    duplicate = EVP_CIPHER_CTX_new();
+    if (duplicate != NULL && EVP_CIPHER_CTX_copy(duplicate, ctx) <= 0) {
+        EVP_CIPHER_CTX_free(duplicate);
+        duplicate = NULL;
+    }
     CHECK(duplicate == NULL);
     ERR_clear_error();
     CHECK(EVP_EncryptUpdate(ctx, output, &outl, plaintext1,

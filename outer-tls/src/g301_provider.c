@@ -146,7 +146,7 @@ static const OSSL_DISPATCH g301_provider_functions[] = {
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES,
         (void (*)(void))g301_provider_get_capabilities },
 #endif
-    OSSL_DISPATCH_END
+    { 0, NULL }
 };
 
 G301_EXPORT OSSL_provider_init_fn OSSL_provider_init;
