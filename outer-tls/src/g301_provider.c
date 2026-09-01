@@ -106,7 +106,7 @@ static int g301_provider_get_capabilities(void *provctx,
     if (capability == NULL || cb == NULL)
         return 0;
     if (strcmp(capability, G301_TLS_CIPHERSUITE_CAPABILITY) != 0)
-        return 0;
+        return 1;
     return cb(g301_tls_ciphersuite_params, arg);
 }
 #endif

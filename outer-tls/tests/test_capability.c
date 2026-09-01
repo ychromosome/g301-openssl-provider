@@ -119,7 +119,7 @@ int main(int argc, char **argv)
         goto end;
     if (OSSL_PROVIDER_get_capabilities(g301_provider, "TLS-GROUP",
             count_unexpected_callback, &unexpected_calls)
-            != 0
+            <= 0
         || unexpected_calls != 0U)
         goto end;
     if (OSSL_PROVIDER_get_capabilities(g301_provider, NULL,
