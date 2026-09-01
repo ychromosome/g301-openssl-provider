@@ -37,11 +37,11 @@ prevents its ptrace operation. Valgrind is the independent leak lane. The
 allocation sweep targets the provider's five direct allocations; it does not
 claim exhaustive failure injection inside OpenSSL.
 
-TLS negotiation is not established by this matrix. The historical broad fork
-uses an obsolete seven-field descriptor and an older generated API surface;
-it is not a substitute for the separate six-field minimal patch. Native TLS,
-generic RFC 9846 record-use enforcement, resumption, and built-in-suite
-non-regression remain open gates.
+This standalone matrix does not establish TLS negotiation. A separate
+six-field provider-ciphersuite-fork lane now covers exact `0xff30`
+negotiation, bidirectional records, exporter agreement, KeyUpdate,
+absent-provider rejection and built-in non-regression. Upstream acceptance and
+complete record-usage policy remain open.
 
 No production, standardization, FIPS, interoperability, constant-time, or
 independent-audit claim follows from this status.

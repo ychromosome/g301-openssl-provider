@@ -17,21 +17,22 @@ Date: 2026-08-25
 
 ## Open gates
 
-1. Build and review the separate minimal OpenSSL provider-ciphersuite patch.
-2. Add generic libssl record-usage enforcement with built-in-suite regression
-   tests; do not hide it in G301 metadata.
-3. Run a fresh TLS 1.3 matrix: both directions, KeyUpdate, failure without the
-   provider, built-in suite non-regression, resumption policy, and offload
-   exclusion.
-4. Measure wrapper overhead now that the standalone assurance matrix is green.
-5. Obtain independent security and performance reviews of a sealed source and
-   evidence bundle.
-6. Freeze a public name and registered code point only after external review.
+1. Obtain upstream review of the separate provider-ciphersuite patch.
+2. Define and verify the final record-usage policy without adding a private
+   G301 capability field.
+3. Repeat the ABI 3/4 assurance lanes on current security patch releases.
+4. Obtain independent review of the combined native TLS lane.
+5. Freeze a public name and registered code point only after external review.
 
 Completed on 2026-08-25: dual-lane EVP/lifecycle/fault/sanitizer/analyzer/
 Valgrind matrix; 4,096-case-per-lane independent Mbed TLS differential oracle;
 RFC 9846 single-key applicability arithmetic. Details and limits are recorded
 in `ASSURANCE_STATUS.md`.
+
+Completed on 2026-08-31: experimental native TLS negotiation against the
+separate fork, including exact suite selection, both record directions,
+exporter agreement, KeyUpdate, built-in non-regression and absent-provider
+rejection.
 
 The reserved `inner-threads` layer is not one of these gates and remains out of
 scope.

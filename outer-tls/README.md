@@ -22,12 +22,12 @@ limit. RFC 9846 usage enforcement, sequence numbers, nonces, traffic epochs,
 KeyUpdate, record framing, and alerts belong to libssl.
 
 Unmodified OpenSSL can load and exercise the EVP cipher and inspect the
-descriptor, but cannot negotiate it as a TLS suite. Native TLS testing requires
-the separate minimal provider-ciphersuite patch. The working identifiers are
-not IANA registrations.
+descriptor, but cannot negotiate it as a TLS suite. The separate
+provider-ciphersuite fork now supplies a passing experimental native TLS lane.
+The working identifiers are not IANA registrations.
 
-The compatibility target is OpenSSL ABI major 3 and ABI major 4. The latest
-exact evidence was produced with OpenSSL 3.5.7 and 4.0.1. The matrix includes
+The compatibility target is OpenSSL ABI major 3 and ABI major 4. The recorded
+standalone evidence used OpenSSL 3.5.7 and 4.0.1. The matrix includes
 an independent Mbed TLS oracle, lifecycle/concurrency cases,
 ASan/UBSan, GCC/Clang analysis, Valgrind, and binary-surface checks. These are
 implementation checks, not a production or constant-time proof. See

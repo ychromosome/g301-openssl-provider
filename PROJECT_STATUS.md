@@ -1,14 +1,14 @@
 # Project status
 
-Date: 2026-08-26
+Date: 2026-09-01
 
 | Component | State |
 |---|---|
-| Outer EVP provider | BUILDS; ABI 3/4 matrix PASS (tested on 3.5.7 and 4.0.1) |
+| Outer EVP provider | BUILDS; ABI 3/4 matrix PASS; recorded standalone runs used 3.5.7 and 4.0.1 |
 | Fixed manifest and KAT bytes | FROZEN for the experimental V1 profile |
 | Minimal six-field TLS descriptor | IMPLEMENTED; descriptor inspection PASS |
 | Private per-suite `2^24` field | REMOVED from the active design and source |
-| Native TLS use | BLOCKED on separate minimal libssl patch and generic RFC 9846 enforcement |
+| Native TLS use | EXPERIMENTAL PASS against the separate libssl fork: `0xff30`, bidirectional records, exporter, KeyUpdate and absent-provider rejection |
 | Independent AES-GCM oracle | PASS: 4,096 deterministic cases per lane, positive and negative |
 | Lifecycle and concurrency | PASS: 100 fresh load/unload cycles, dual libctx, shared-key threads |
 | Sanitizers and analyzers | PASS on both lanes; LSan replaced by separate Valgrind leak lane |
@@ -22,8 +22,8 @@ Date: 2026-08-26
 | Production/release approval | NOT GRANTED |
 
 The active target is intentionally narrow: one provider CIPHER operation and
-one experimental TLS descriptor. The OpenSSL patch, generic record-usage
-enforcement, public identifiers, and the reserved inner layer are separate
+one experimental TLS descriptor. Upstream acceptance, complete record-usage
+policy, public identifiers and the reserved inner layer remain separate
 workstreams.
 
 See `outer-tls/docs/ASSURANCE_STATUS.md` for the executed matrix and its claim
