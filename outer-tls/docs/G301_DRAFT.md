@@ -87,11 +87,15 @@ Capability name: `TLS-CIPHERSUITE`. The descriptor contains exactly:
 
 The descriptor is a candidate for the separate OpenSSL provider-ciphersuite
 work. It is not part of upstream OpenSSL and the code point is private-use.
-There is no per-suite record counter or usage-limit field.
+It contains no usage-limit field. The provider permits at most 23,680,450
+encrypted records under one write key. IV-only initialization, reinstalling
+the same key, failed initialization, and retry do not reset the counter.
+Installing a different key does. Decryption is not counted. `dupctx` is not
+advertised.
 
-For TLS 1.3, RFC 9846 owns the record header AAD, nonce construction, traffic
-keys, directions, epochs, KeyUpdate, and key-usage limit. G301 changes only the
-AEAD AAD from `A` to `M || A`; it does not change ciphertext or tag lengths.
+For TLS 1.3, libssl owns record header AAD, nonce construction, traffic keys,
+directions, epochs, KeyUpdate, alerts, and connection close. G301 changes only
+the AEAD AAD from `A` to `M || A` and enforces the write-key usage ceiling.
 
 ## Claim boundary
 

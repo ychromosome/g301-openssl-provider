@@ -9,13 +9,13 @@ Date: 2026-08-25
 | AES-256-GCM | NIST SP 800-38D; OpenSSL default provider | BUY | fetched as `AES-256-GCM`, `provider=default` |
 | Provider cipher contract | OpenSSL `provider-cipher(7)` | USE STANDARD API | dispatch and state adapter only |
 | Provider child context | OpenSSL `OSSL_LIB_CTX_new_child()` | USE STANDARD API | one child context per provider instance |
-| TLS record key/IV/AAD | RFC 9846 Sections 5.2-5.5 | DELEGATE TO LIBSSL | none |
+| TLS record key/IV/AAD | RFC 9846 Sections 5.2-5.4 | DELEGATE TO LIBSSL | none |
 | TLS handshake digest | RFC 9846 suite model | USE SHA2-384 | descriptor metadata only |
 | Fixed AAD prefix | G301 experimental profile | EIGENBAU | immutable 32-byte constant, injected once |
 | Manifest encoding | G301 experimental profile | EIGENBAU | fixed-width table, no runtime parser |
 | TLS descriptor | OpenSSL #23093 design candidate | EXPERIMENTAL GLUE | six metadata fields; no record policy |
 | Random generation | OpenSSL/libssl owner | NOT USED BY CIPHER | none |
-| Record usage limit | RFC 9846 Section 5.5 | DELEGATE TO LIBSSL | no provider field or counter |
+| Record usage limit | RFC 9846 Section 5.5 | ENFORCE IN PROVIDER | write-key counter; 23,680,450 encrypted records |
 
 The two local construction choices exist only to bind the fixed public profile
 to each AEAD invocation and to expose that operation through EVP. Neither

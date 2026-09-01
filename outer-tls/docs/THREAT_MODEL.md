@@ -11,9 +11,10 @@
 ## Trust boundaries
 
 - libssl owns negotiation, traffic keys, nonces, sequence numbers, epochs,
-  record framing, KeyUpdate, alerts, and usage enforcement;
+  record framing, KeyUpdate, alerts, and connection close;
 - OpenSSL's default provider owns AES-256-GCM and tag verification;
-- the G301 provider owns exact manifest injection and its local EVP state;
+- the G301 provider owns exact manifest injection, its local EVP state, and
+  the encrypted-record budget for each write key;
 - the application owns peer authentication, authorization, replay-sensitive
   semantics, and any post-handshake protocol.
 
@@ -43,6 +44,7 @@ AES-GCM or protect against both peers making the same mistake.
 - no AAD after payload;
 - no tag release before successful encryption final;
 - no successful decryption final without a fresh current-record tag;
+- no encryption after 23,680,450 records under one write key;
 - checked length conversion and output bounds;
 - fail-closed propagation of delegated failures;
 - child-library-context fetch restricted to `provider=default`;

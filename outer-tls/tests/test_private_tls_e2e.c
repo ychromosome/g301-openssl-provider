@@ -24,6 +24,9 @@
 
 #define G301_E2E_STEP_LIMIT 10000U
 #define G301_EXPORTER_LENGTH 64U
+#ifndef G301_ACCELERATED_RECORD_LIMIT
+#define G301_ACCELERATED_RECORD_LIMIT 8U
+#endif
 
 static void report_failure(const char *operation)
 {
@@ -345,6 +348,40 @@ static int request_key_update(SSL *client)
     return 1;
 }
 
+static int check_record_limit(SSL *writer, SSL *reader, int key_update,
+    const char *direction)
+{
+    static const unsigned char message[] = "g301 record-limit probe";
+    size_t written = 0;
+    unsigned int i;
+
+    for (i = 0; i < (key_update ? G301_ACCELERATED_RECORD_LIMIT - 1U
+                                : G301_ACCELERATED_RECORD_LIMIT);
+        i++) {
+        if (!transfer_exact(writer, reader, message, sizeof(message) - 1U,
+                direction))
+            return 0;
+    }
+    if (key_update && !request_key_update(writer))
+        return 0;
+    if (key_update) {
+        for (i = 0; i < G301_ACCELERATED_RECORD_LIMIT; i++) {
+            if (!transfer_exact(writer, reader, message,
+                    sizeof(message) - 1U, direction))
+                return 0;
+        }
+    }
+
+    ERR_clear_error();
+    if (SSL_write_ex(writer, message, sizeof(message) - 1U, &written) != 0
+        || ERR_peek_error() == 0) {
+        report_failure("record-limit refusal");
+        return 0;
+    }
+    ERR_clear_error();
+    return 1;
+}
+
 static int check_selection_without_g301(const char *default_provider_directory)
 {
     OSSL_LIB_CTX *libctx = NULL;
@@ -386,6 +423,7 @@ int main(int argc, char **argv)
     static const unsigned char updated_client_message[] = "client traffic after requested KeyUpdate";
     static const unsigned char updated_server_message[] = "server traffic and KeyUpdate response";
     const char *default_provider_directory = NULL;
+    const char *mode = "positive";
     OSSL_LIB_CTX *libctx = NULL;
     OSSL_PROVIDER *default_provider = NULL;
     OSSL_PROVIDER *g301_provider = NULL;
@@ -397,14 +435,30 @@ int main(int argc, char **argv)
     SSL *server = NULL;
     int ok = 0;
 
-    if (argc != 2 && argc != 3) {
+    if (argc < 2 || argc > 4) {
         fprintf(stderr,
-            "usage: %s G301_MODULE_DIRECTORY [DEFAULT_PROVIDER_DIRECTORY]\n",
+            "usage: %s G301_MODULE_DIRECTORY "
+            "[DEFAULT_PROVIDER_DIRECTORY] [MODE]\n",
             argv[0]);
         return EXIT_FAILURE;
     }
-    if (argc == 3)
+    if (argc == 3) {
+        if (strncmp(argv[2], "record-limit-", 13) == 0)
+            mode = argv[2];
+        else
+            default_provider_directory = argv[2];
+    } else if (argc == 4) {
         default_provider_directory = argv[2];
+        mode = argv[3];
+    }
+    if (strcmp(mode, "positive") != 0
+        && strcmp(mode, "record-limit-client") != 0
+        && strcmp(mode, "record-limit-server") != 0
+        && strcmp(mode, "record-limit-client-keyupdate") != 0
+        && strcmp(mode, "record-limit-server-keyupdate") != 0) {
+        fprintf(stderr, "unknown mode: %s\n", mode);
+        return EXIT_FAILURE;
+    }
 
     libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL
@@ -419,8 +473,24 @@ int main(int argc, char **argv)
         || SSL_version(client) != TLS1_3_VERSION
         || SSL_version(server) != TLS1_3_VERSION
         || !check_selected_suite(client, "client")
-        || !check_selected_suite(server, "server")
-        || !transfer_exact(client, server, client_message,
+        || !check_selected_suite(server, "server"))
+        goto end;
+
+    if (strncmp(mode, "record-limit-", 13) == 0) {
+        const int client_writes = strstr(mode, "client") != NULL;
+        const int key_update = strstr(mode, "keyupdate") != NULL;
+
+        if (!check_record_limit(client_writes ? client : server,
+                client_writes ? server : client, key_update,
+                client_writes ? "record-limit-client"
+                              : "record-limit-server"))
+            goto end;
+        ok = 1;
+        printf("g301 private TLS record limit: ok (%s)\n", mode);
+        goto end;
+    }
+
+    if (!transfer_exact(client, server, client_message,
             sizeof(client_message) - 1U, "client-to-server")
         || !transfer_exact(server, client, server_message,
             sizeof(server_message) - 1U, "server-to-client")
@@ -450,8 +520,10 @@ end:
         report_failure("overall private-fork E2E");
         return EXIT_FAILURE;
     }
-    puts("g301 private TLS E2E: ok (patched private fork only; TLS 1.3; "
-         "G301-AES-256-GCM-V1/0xFF30; bidirectional data; exporter; "
-         "requested KeyUpdate; provider-absent rejection)");
+    if (strcmp(mode, "positive") == 0) {
+        puts("g301 private TLS E2E: ok (patched private fork only; TLS 1.3; "
+             "G301-AES-256-GCM-V1/0xFF30; bidirectional data; exporter; "
+             "requested KeyUpdate; provider-absent rejection)");
+    }
     return EXIT_SUCCESS;
 }

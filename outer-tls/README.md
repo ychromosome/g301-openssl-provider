@@ -17,9 +17,10 @@ The provider also advertises one experimental TLS 1.3 descriptor:
 - tag length: 16 bytes;
 - security bits: 256.
 
-That descriptor has exactly six fields and contains no private record-usage
-limit. RFC 9846 usage enforcement, sequence numbers, nonces, traffic epochs,
-KeyUpdate, record framing, and alerts belong to libssl.
+The descriptor has exactly six fields and no private usage-limit metadata.
+The provider refuses encryption after 23,680,450 records under one write key.
+Only a different key resets that counter. libssl still owns sequence numbers,
+nonces, traffic epochs, KeyUpdate, record framing, alerts, and connection close.
 
 Unmodified OpenSSL can load and exercise the EVP cipher and inspect the
 descriptor, but cannot negotiate it as a TLS suite. The separate

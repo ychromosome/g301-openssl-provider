@@ -40,8 +40,10 @@ claim exhaustive failure injection inside OpenSSL.
 This standalone matrix does not establish TLS negotiation. A separate
 six-field provider-ciphersuite-fork lane now covers exact `0xff30`
 negotiation, bidirectional records, exporter agreement, KeyUpdate,
-absent-provider rejection and built-in non-regression. Upstream acceptance and
-complete record-usage policy remain open.
+absent-provider rejection and built-in non-regression. Accelerated threshold
+tests cover both write directions and KeyUpdate. The ABI 3/4 release,
+ASan/UBSan, analyzer, Valgrind, and allocation-failure lanes were repeated on
+2026-09-01. Upstream acceptance remains open.
 
 No production, standardization, FIPS, interoperability, constant-time, or
 independent-audit claim follows from this status.

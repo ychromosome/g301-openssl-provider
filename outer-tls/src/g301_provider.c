@@ -69,6 +69,7 @@ static const OSSL_ITEM g301_reason_strings[] = {
     { G301_R_INVALID_STATE, "invalid cipher state" },
     { G301_R_OUTPUT_BUFFER_TOO_SMALL, "output buffer too small" },
     { G301_R_INTERNAL_ERROR, "internal cipher contract violation" },
+    { G301_R_KEY_USAGE_LIMIT_EXCEEDED, "write-key usage limit exceeded" },
     { 0, NULL }
 };
 

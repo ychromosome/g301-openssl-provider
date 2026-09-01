@@ -2,7 +2,7 @@
 
 # Performance status
 
-Date: 2026-08-26
+Date: 2026-09-01
 
 The standalone EVP benchmark uses reused contexts and measures IV reset, AAD,
 payload, final, and tag get/set. Four paths isolate ordinary AES-GCM, the
@@ -44,6 +44,15 @@ are exact evidence points for the ABI 3 and ABI 4 targets.
   and two confidence-bound gates insufficient, so these figures are historical
   evidence, not an accepted performance claim.
 - AAD fusion, direct provider dispatch, and local AES/GHASH remain rejected.
+
+## Write-key usage counter
+
+An eight-pair ABBA/BAAB run on OpenSSL 3.5.7 measured median fixed wrapper
+cost increases of 18.154 ns pooled, 23.172 ns for encryption, and 13.653 ns
+for decryption. At 16,385 bytes the native-path medians increased by 1.190%
+for encryption and 1.233% for decryption. The counter is a security gate, not
+a performance candidate; its measured cost is retained as a regression
+baseline.
 
 The corrected candidate runner builds both modules from verified, bundled
 source snapshots and gates on adverse confidence limits. A fresh run on ABI 3

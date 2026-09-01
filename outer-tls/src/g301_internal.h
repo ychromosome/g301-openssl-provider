@@ -4,6 +4,7 @@
 #define G301_INTERNAL_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
@@ -16,6 +17,11 @@
 #define G301_IV_LENGTH ((size_t)12)
 #define G301_TAG_LENGTH ((size_t)16)
 #define G301_MANIFEST_LENGTH ((size_t)32)
+#ifdef G301_TEST_RECORD_LIMIT
+# define G301_ENCRYPT_RECORD_LIMIT ((uint64_t)G301_TEST_RECORD_LIMIT)
+#else
+# define G301_ENCRYPT_RECORD_LIMIT UINT64_C(23680450)
+#endif
 
 typedef struct g301_inner_ops_st {
     void *(*newctx)(void *arg);
@@ -44,7 +50,8 @@ enum {
     G301_R_INVALID_PARAMETER = 1,
     G301_R_INVALID_STATE,
     G301_R_OUTPUT_BUFFER_TOO_SMALL,
-    G301_R_INTERNAL_ERROR
+    G301_R_INTERNAL_ERROR,
+    G301_R_KEY_USAGE_LIMIT_EXCEEDED
 };
 
 extern const G301_INNER_OPS g301_evp_inner_ops;
@@ -65,6 +72,7 @@ int g301_test_cipher_final(void *vctx, unsigned char *out, size_t *outl,
     size_t outsize);
 int g301_test_cipher_get_ctx_params(void *vctx, OSSL_PARAM params[]);
 int g301_test_cipher_set_ctx_params(void *vctx, const OSSL_PARAM params[]);
+int g301_test_cipher_set_record_limit(void *vctx, uint64_t limit);
 #endif
 
 #endif

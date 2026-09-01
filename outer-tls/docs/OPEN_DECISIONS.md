@@ -12,17 +12,16 @@ Date: 2026-08-25
 - one EVP cipher identity, no ordinary AES alias;
 - six-field experimental TLS descriptor;
 - no private provider usage-limit field;
-- no cipher-owned RNG, record counter, nonce, KeyUpdate, or TLS framing;
+- provider-owned write-key record counter; no cipher-owned RNG, nonce,
+  KeyUpdate, or TLS framing;
 - no QUIC, kTLS, TLS 1.2 legacy surface, pipeline, one-shot, or `dupctx`.
 
 ## Open gates
 
 1. Obtain upstream review of the separate provider-ciphersuite patch.
-2. Define and verify the final record-usage policy without adding a private
-   G301 capability field.
-3. Repeat the ABI 3/4 assurance lanes on current security patch releases.
-4. Obtain independent review of the combined native TLS lane.
-5. Freeze a public name and registered code point only after external review.
+2. Repeat the ABI 3/4 assurance lanes on current security patch releases.
+3. Obtain independent review of the combined native TLS lane.
+4. Freeze a public name and registered code point only after external review.
 
 Completed on 2026-08-25: dual-lane EVP/lifecycle/fault/sanitizer/analyzer/
 Valgrind matrix; 4,096-case-per-lane independent Mbed TLS differential oracle;
@@ -33,6 +32,9 @@ Completed on 2026-08-31: experimental native TLS negotiation against the
 separate fork, including exact suite selection, both record directions,
 exporter agreement, KeyUpdate, built-in non-regression and absent-provider
 rejection.
+
+Completed on 2026-09-01: provider-enforced write-key usage limit with
+accelerated TLS tests in both directions and across KeyUpdate.
 
 The reserved `inner-threads` layer is not one of these gates and remains out of
 scope.

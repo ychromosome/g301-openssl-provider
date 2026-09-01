@@ -298,6 +298,97 @@ static int get_current_tag(void *ctx, unsigned char output[16])
     return g301_test_cipher_get_ctx_params(ctx, params);
 }
 
+static int complete_encrypt_record(void *ctx, const unsigned char *key_value,
+    const unsigned char iv_value[12])
+{
+    unsigned char output[sizeof(payload)];
+    unsigned char tag[16];
+    size_t outl = 0;
+    size_t key_length = key_value == NULL ? 0 : sizeof(key_a);
+
+    return g301_test_cipher_encrypt_init(ctx, key_value, key_length,
+               iv_value, sizeof(iv_a), NULL)
+        && g301_test_cipher_update(ctx, output, &outl, sizeof(output),
+            payload, sizeof(payload))
+        && outl == sizeof(payload) && finalize_encrypt(ctx)
+        && get_current_tag(ctx, tag);
+}
+
+static int complete_decrypt_record(void *ctx, const unsigned char *key_value,
+    const unsigned char iv_value[12])
+{
+    unsigned char output[sizeof(payload)];
+    unsigned char tag[16] = { 0 };
+    size_t outl = 0;
+    size_t key_length = key_value == NULL ? 0 : sizeof(key_a);
+
+    return g301_test_cipher_decrypt_init(ctx, key_value, key_length,
+               iv_value, sizeof(iv_a), NULL)
+        && set_current_tag(ctx, tag)
+        && g301_test_cipher_update(ctx, output, &outl, sizeof(output),
+            payload, sizeof(payload))
+        && outl == sizeof(payload)
+        && g301_test_cipher_final(ctx, NULL, &outl, 0);
+}
+
+static int test_write_key_usage_limit(void)
+{
+    FIXTURE fixture;
+    void *ctx = NULL;
+    unsigned char output[sizeof(payload)];
+    size_t outl = SIZE_MAX;
+    int before;
+    int ok = 0;
+
+    fixture_reset(&fixture);
+    ctx = new_outer(&fixture);
+    CHECK(ctx != NULL && g301_test_cipher_set_record_limit(ctx, UINT64_C(3)));
+    CHECK(complete_encrypt_record(ctx, key_a, iv_a));
+    CHECK(complete_encrypt_record(ctx, NULL, iv_b));
+    CHECK(complete_encrypt_record(ctx, key_a, iv_a));
+
+    CHECK(g301_test_cipher_encrypt_init(ctx, NULL, 0, iv_b, sizeof(iv_b),
+        NULL));
+    before = fixture.update_calls;
+    CHECK(!g301_test_cipher_update(ctx, output, &outl, sizeof(output),
+        payload, sizeof(payload)));
+    CHECK(outl == 0 && fixture.update_calls == before
+        && fixture.last_reason == G301_R_KEY_USAGE_LIMIT_EXCEEDED);
+    CHECK(!g301_test_cipher_update(ctx, output, &outl, sizeof(output),
+        payload, sizeof(payload)));
+    CHECK(g301_test_cipher_encrypt_init(ctx, key_a, sizeof(key_a), iv_a,
+        sizeof(iv_a), NULL));
+    CHECK(!g301_test_cipher_update(ctx, output, &outl, sizeof(output),
+        payload, sizeof(payload)));
+
+    CHECK(complete_encrypt_record(ctx, key_b, iv_b));
+    CHECK(complete_encrypt_record(ctx, NULL, iv_a));
+    fixture.fail_init = 1;
+    CHECK(!g301_test_cipher_encrypt_init(ctx, key_a, sizeof(key_a), iv_b,
+        sizeof(iv_b), NULL));
+    CHECK(complete_encrypt_record(ctx, key_b, iv_b));
+    CHECK(g301_test_cipher_encrypt_init(ctx, key_a, sizeof(key_a), NULL, 0,
+        NULL));
+    CHECK(g301_test_cipher_encrypt_init(ctx, key_b, sizeof(key_b), iv_a,
+        sizeof(iv_a), NULL));
+    CHECK(!g301_test_cipher_update(ctx, output, &outl, sizeof(output),
+        payload, sizeof(payload)));
+    g301_test_cipher_freectx(ctx);
+    ctx = NULL;
+
+    fixture_reset(&fixture);
+    ctx = new_outer(&fixture);
+    CHECK(ctx != NULL && g301_test_cipher_set_record_limit(ctx, UINT64_C(3)));
+    CHECK(complete_decrypt_record(ctx, key_a, iv_a));
+    CHECK(complete_decrypt_record(ctx, NULL, iv_b));
+    CHECK(complete_decrypt_record(ctx, NULL, iv_a));
+    CHECK(complete_decrypt_record(ctx, NULL, iv_b));
+    ok = 1;
+end:
+    g301_test_cipher_freectx(ctx);
+    return ok;
+}
+
 static int test_exactly_once_and_boundaries(void)
 {
     FIXTURE fixture;
@@ -1092,6 +1183,8 @@ end:
 
 int main(void)
 {
+    if (!test_write_key_usage_limit())
+        goto end;
     if (!test_exactly_once_and_boundaries())
         goto end;
     if (!test_manifest_failure_and_recovery())

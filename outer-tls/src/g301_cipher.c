@@ -37,6 +37,16 @@ typedef struct g301_cipher_ctx_st {
     int needs_reinit;
     int decrypt_tag_current;
     int payload_started;
+    CRYPTO_RWLOCK *usage_lock;
+    unsigned char current_key[G301_KEY_LENGTH];
+    unsigned char usage_key[G301_KEY_LENGTH];
+    int encrypted_records;
+    int record_limit;
+    int current_key_valid;
+    int current_key_changed;
+    int usage_key_valid;
+    int usage_exhausted;
+    int record_reserved;
 } G301_CIPHER_CTX;
 
 static void g301_raise_error(G301_CIPHER_CTX *ctx, uint32_t reason,
@@ -66,6 +76,8 @@ static const unsigned char g301_manifest[G301_MANIFEST_LENGTH] = {
 
 _Static_assert(sizeof(g301_manifest) == G301_MANIFEST_LENGTH,
     "the Alpha/Beta manifest must remain exactly 32 bytes");
+_Static_assert(G301_ENCRYPT_RECORD_LIMIT <= INT_MAX,
+    "the write-key record limit must fit CRYPTO_atomic_add");
 
 static void g301_invalidate_record(G301_CIPHER_CTX *ctx)
 {
@@ -78,6 +90,86 @@ static void g301_poison(G301_CIPHER_CTX *ctx)
 {
     ctx->needs_reinit = 1;
     ctx->decrypt_tag_current = 0;
+}
+
+static int g301_record_current_key(G301_CIPHER_CTX *ctx,
+    const unsigned char key[G301_KEY_LENGTH])
+{
+    int changed;
+
+    if (!CRYPTO_THREAD_write_lock(ctx->usage_lock))
+        return 0;
+    changed = !ctx->current_key_valid
+        || CRYPTO_memcmp(ctx->current_key, key, G301_KEY_LENGTH) != 0;
+    if (changed) {
+        memcpy(ctx->current_key, key, G301_KEY_LENGTH);
+        ctx->current_key_valid = 1;
+        ctx->current_key_changed = 1;
+    }
+    CRYPTO_THREAD_unlock(ctx->usage_lock);
+    return 1;
+}
+
+static int g301_install_write_key(G301_CIPHER_CTX *ctx)
+{
+    int same_key;
+
+    if (!ctx->current_key_valid)
+        return 0;
+    if (ctx->usage_key_valid && !ctx->current_key_changed) {
+        ctx->record_reserved = 0;
+        return 1;
+    }
+    if (!CRYPTO_THREAD_write_lock(ctx->usage_lock))
+        return 0;
+    if (!ctx->current_key_valid) {
+        CRYPTO_THREAD_unlock(ctx->usage_lock);
+        return 0;
+    }
+    same_key = ctx->usage_key_valid
+        && CRYPTO_memcmp(ctx->usage_key, ctx->current_key,
+               G301_KEY_LENGTH)
+            == 0;
+    if (!same_key) {
+        memcpy(ctx->usage_key, ctx->current_key, G301_KEY_LENGTH);
+        ctx->usage_key_valid = 1;
+        ctx->encrypted_records = 0;
+        ctx->usage_exhausted = 0;
+    }
+    ctx->current_key_changed = 0;
+    ctx->record_reserved = 0;
+    CRYPTO_THREAD_unlock(ctx->usage_lock);
+    return 1;
+}
+
+static int g301_reserve_encryption_record(G301_CIPHER_CTX *ctx)
+{
+    int records;
+
+    if (ctx->record_reserved)
+        return 1;
+    if (!ctx->usage_key_valid || ctx->usage_exhausted) {
+        g301_poison(ctx);
+        g301_invalidate_record(ctx);
+        G301_RAISE(ctx, G301_R_KEY_USAGE_LIMIT_EXCEEDED);
+        return 0;
+    }
+    if (!CRYPTO_atomic_add(&ctx->encrypted_records, 1, &records,
+            ctx->usage_lock)) {
+        g301_poison(ctx);
+        g301_invalidate_record(ctx);
+        G301_RAISE(ctx, G301_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (records <= ctx->record_limit) {
+        ctx->record_reserved = 1;
+        return 1;
+    }
+    ctx->usage_exhausted = 1;
+    g301_poison(ctx);
+    g301_invalidate_record(ctx);
+    G301_RAISE(ctx, G301_R_KEY_USAGE_LIMIT_EXCEEDED);
+    return 0;
 }
 
 static int g301_has_duplicate(const OSSL_PARAM params[], const char *name)
@@ -275,6 +367,13 @@ static int g301_init(void *vctx, const unsigned char *key, size_t keylen,
         return 0;
     }
 
+    if (has_key && !g301_record_current_key(ctx, key)) {
+        g301_poison(ctx);
+        g301_invalidate_record(ctx);
+        G301_RAISE(ctx, G301_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     ctx->encrypt = encrypt;
     ctx->direction_set = 1;
     if (has_key)
@@ -285,6 +384,12 @@ static int g301_init(void *vctx, const unsigned char *key, size_t keylen,
             g301_poison(ctx);
             g301_invalidate_record(ctx);
             G301_RAISE(ctx, G301_R_INVALID_STATE);
+            return 0;
+        }
+        if (encrypt && !g301_install_write_key(ctx)) {
+            g301_poison(ctx);
+            g301_invalidate_record(ctx);
+            G301_RAISE(ctx, G301_R_INTERNAL_ERROR);
             return 0;
         }
         ctx->phase = G301_PHASE_MANIFEST_PENDING;
@@ -313,8 +418,12 @@ static void *g301_cipher_newctx(void *vprovctx)
     ctx->core_new_error = provctx->core_new_error;
     ctx->core_set_error_debug = provctx->core_set_error_debug;
     ctx->core_vset_error = provctx->core_vset_error;
+    ctx->record_limit = (int)G301_ENCRYPT_RECORD_LIMIT;
+    ctx->usage_lock = CRYPTO_THREAD_lock_new();
     ctx->inner = ctx->ops->newctx(provctx->inner_arg);
-    if (ctx->inner == NULL) {
+    if (ctx->usage_lock == NULL || ctx->inner == NULL) {
+        ctx->ops->freectx(ctx->inner);
+        CRYPTO_THREAD_lock_free(ctx->usage_lock);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
         return NULL;
     }
@@ -328,6 +437,7 @@ static void g301_cipher_freectx(void *vctx)
     if (ctx == NULL)
         return;
     ctx->ops->freectx(ctx->inner);
+    CRYPTO_THREAD_lock_free(ctx->usage_lock);
     OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
@@ -351,6 +461,8 @@ static int g301_inject_manifest(G301_CIPHER_CTX *ctx)
 
     if (ctx->phase != G301_PHASE_MANIFEST_PENDING)
         return ctx->phase == G301_PHASE_ACTIVE;
+    if (ctx->encrypt && !g301_reserve_encryption_record(ctx))
+        return 0;
     if (!ctx->ops->update(ctx->inner, NULL, &inner_outl, g301_manifest,
             (int)G301_MANIFEST_LENGTH)) {
         g301_poison(ctx);
@@ -792,5 +904,15 @@ int g301_test_cipher_get_ctx_params(void *vctx, OSSL_PARAM params[])
 int g301_test_cipher_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     return g301_cipher_set_ctx_params(vctx, params);
+}
+
+int g301_test_cipher_set_record_limit(void *vctx, uint64_t limit)
+{
+    G301_CIPHER_CTX *ctx = vctx;
+
+    if (ctx == NULL || limit == 0 || limit > (uint64_t)INT_MAX)
+        return 0;
+    ctx->record_limit = (int)limit;
+    return 1;
 }
 #endif

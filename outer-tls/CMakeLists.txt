@@ -121,13 +121,38 @@ if(BUILD_TESTING)
     endif()
 
     if(G301_ENABLE_PRIVATE_TLS_E2E)
+        add_library(g301_limit_test MODULE
+            src/g301_provider.c
+            src/g301_cipher.c
+            src/g301_inner_evp.c)
+        target_include_directories(g301_limit_test PRIVATE src)
+        target_link_libraries(g301_limit_test PRIVATE OpenSSL::Crypto)
+        target_compile_definitions(g301_limit_test PRIVATE
+            G301_TEST_RECORD_LIMIT=8
+            OPENSSL_API_COMPAT=30000)
+        set_target_properties(g301_limit_test PROPERTIES
+            C_VISIBILITY_PRESET hidden
+            VISIBILITY_INLINES_HIDDEN YES
+            PREFIX ""
+            OUTPUT_NAME "g301"
+            LIBRARY_OUTPUT_DIRECTORY
+                "${CMAKE_CURRENT_BINARY_DIR}/limit-provider")
+        g301_strict_target(g301_limit_test)
+        if(UNIX AND NOT APPLE)
+            target_link_options(g301_limit_test PRIVATE
+                "LINKER:-z,relro"
+                "LINKER:-z,now"
+                "LINKER:--no-undefined")
+        endif()
+
         add_executable(g301_private_tls_e2e_test tests/test_private_tls_e2e.c)
         target_include_directories(g301_private_tls_e2e_test PRIVATE src)
         target_link_libraries(g301_private_tls_e2e_test PRIVATE
             OpenSSL::SSL OpenSSL::Crypto)
         target_compile_definitions(g301_private_tls_e2e_test PRIVATE
+            G301_ACCELERATED_RECORD_LIMIT=8
             OPENSSL_API_COMPAT=30000)
-        add_dependencies(g301_private_tls_e2e_test g301)
+        add_dependencies(g301_private_tls_e2e_test g301 g301_limit_test)
         g301_strict_target(g301_private_tls_e2e_test)
 
         add_test(NAME g301_private_tls_e2e
@@ -135,6 +160,19 @@ if(BUILD_TESTING)
         set_tests_properties(g301_private_tls_e2e PROPERTIES
             LABELS "private-fork;e2e"
             TIMEOUT 30)
+
+        foreach(mode IN ITEMS
+                record-limit-client
+                record-limit-server
+                record-limit-client-keyupdate
+                record-limit-server-keyupdate)
+            add_test(NAME "g301_private_tls_${mode}"
+                COMMAND g301_private_tls_e2e_test
+                    "$<TARGET_FILE_DIR:g301_limit_test>" "${mode}")
+            set_tests_properties("g301_private_tls_${mode}" PROPERTIES
+                LABELS "private-fork;e2e;record-limit"
+                TIMEOUT 30)
+        endforeach()
     endif()
 
     if(G301_ENABLE_MBEDTLS_ORACLE)
