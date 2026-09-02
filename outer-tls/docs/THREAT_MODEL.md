@@ -44,7 +44,7 @@ AES-GCM or protect against both peers making the same mistake.
 - no AAD after payload;
 - no tag release before successful encryption final;
 - no successful decryption final without a fresh current-record tag;
-- no encryption after 23,680,450 records under one write key;
+- no encryption after 23,680,450 records in one provider cipher context;
 - checked length conversion and output bounds;
 - fail-closed propagation of delegated failures;
 - child-library-context fetch restricted to `provider=default`;

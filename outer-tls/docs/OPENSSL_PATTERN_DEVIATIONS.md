@@ -13,7 +13,7 @@ Date: 2026-08-25
 | TLS 1.2 AEAD, MAC, encrypt-then-MAC, and multiblock controls | Explicitly rejected | V1 is TLS 1.3-only and must not enter legacy/offload paths |
 | QUIC and kTLS | Excluded | Neither path can consume the experimental provider operation with the required semantics |
 | GCM tag truncation | Rejected | V1 fixes a 16-byte tag |
-| Per-suite usage-limit metadata | Omitted | Provider enforces 23,680,450 encrypted records per write key; libssl owns KeyUpdate/close |
+| Per-suite usage-limit metadata | Omitted | Provider enforces 23,680,450 encrypted records per cipher context; libssl owns KeyUpdate/close |
 | TLS suite registration | Private `0xff30` test identity only | No IANA allocation or upstream interface exists yet |
 
 Every deviation is a scope reduction or an explicit profile distinction. A

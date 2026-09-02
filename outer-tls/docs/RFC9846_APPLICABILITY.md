@@ -19,13 +19,14 @@ G301 L / L+1                          = 1028 / 1029
 ```
 
 Scaling the cited bound by `1027/1029` gives approximately 23,680,450
-full-size records, about 0.005614 bits below the unadjusted value. This is a
+full-size records, about 0.002807 bits below the unadjusted value. This is a
 single-key, maximum-record-size comparison, not a fleet-wide failure bound.
 Directions and traffic-key epochs are separate scopes.
 
 The active six-field capability declares no usage-limit parameter. The
-provider enforces the conservative integer floor above: 23,680,450 encrypted
-records per write key. Decryption is not counted. A different write key resets
-the counter; IV changes, same-key reinstallation, retry, and failed or partial
-initialization do not. The provider fails the record operation at exhaustion;
-it cannot initiate KeyUpdate.
+provider enforces the conservative integer floor above within one cipher
+context. The supported libssl path uses one context per write-key epoch, but
+the provider cannot recognize a fresh context initialized with the same key.
+Decryption is not counted. IV changes, same-key reinstallation, retry, and
+failed or partial initialization do not reset a live context. The provider
+fails the record operation at exhaustion; it cannot initiate KeyUpdate.

@@ -19,9 +19,10 @@ Non-negotiable rules:
    reinitialization.
 4. Unauthenticated decryption output is provisional. A caller may act on it
    only after successful final tag verification.
-5. The provider counts encrypted records per write key and refuses records
-   after 23,680,450. Decryption is not counted. libssl owns key/nonce
-   uniqueness, directions, epochs, KeyUpdate, and connection termination.
+5. The provider refuses encryption after 23,680,450 records in one cipher
+   context. The supported libssl path creates one such context per write-key
+   epoch. Recreating a context with the same key is not tracked. Decryption is
+   not counted.
 6. The outer name never aliases `AES-256-GCM` or
    `TLS_AES_256_GCM_SHA384`. The wrapper advertises `fips=no`; use of an
    OpenSSL primitive does not make the wrapper FIPS validated.
