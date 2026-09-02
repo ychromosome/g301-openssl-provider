@@ -30,7 +30,7 @@ d71c893bc0977a050300b9d5bcb1bc63cf747ad5d5cc1a6acd4d617afe063bf8  ./scripts/chec
 de0b404c4d2af95caa54ec522f97b1b0d578f893c69f57cf90a88261b79cda36  ./scripts/check-provider-surface.sh
 abf17f103c0688693a24d78f51f06a74c6f28461b90e89c7ab9f3f96a2d44abe  ./scripts/common.sh
 b1e221964789e95bb8ee2c2583e9388d94d22e2a28466428b0432d8eaac69c41  ./scripts/run-allocation-failure.sh
-cd8edf22ad9bdd57199ad95824bd253c87e890f57fe7421ff4193e9e739120b8  ./scripts/run-assurance-lane.sh
+7bc53bf9186f6578f0083445a9f2d2bbb99ad58b0479477e7a057d6dc9b7598f  ./scripts/run-assurance-lane.sh
 593cc443894ae06b24da0273ef060744ccb964d03a2b04a867feb537189c9d37  ./scripts/run-provider-lane.sh
 c593734b6580630cc0c965d622da4de7234b6965def968ef7061e607ea52e866  ./src/g301_cipher.c
 14a54238019f26af759c712401d9bf33aff717745c3ea5be329fc286e8a0b6c5  ./src/g301_inner_evp.c

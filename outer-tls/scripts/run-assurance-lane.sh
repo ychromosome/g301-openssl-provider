@@ -27,6 +27,18 @@ blocked=0
 if [ -z "$ccc_analyzer_bin" ] && [ -x /usr/libexec/ccc-analyzer ]; then
     ccc_analyzer_bin=/usr/libexec/ccc-analyzer
 fi
+if [ -z "$ccc_analyzer_bin" ]; then
+    for llvm_config in /usr/bin/llvm-config /usr/bin/llvm-config-*; do
+        if [ -x "$llvm_config" ]; then
+            llvm_libdir=$($llvm_config --libdir 2>/dev/null || true)
+            candidate=$(dirname -- "$llvm_libdir")/libexec/ccc-analyzer
+            if [ -x "$candidate" ]; then
+                ccc_analyzer_bin=$candidate
+                break
+            fi
+        fi
+    done
+fi
 
 if [ -e "$work_dir" ]; then
     echo "work directory must not exist: $work_dir" >&2
