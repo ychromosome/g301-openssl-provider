@@ -1,0 +1,5 @@
+The g301-openssl-provider-policy package is an explicit experimental laboratory
+opt-in. It places G301-AES-256-GCM-V1 before Fedora's current TLS cipher-suite
+list and retains that list as fallback. Removing this package restores the
+Fedora-generated list. This OpenSSL overlay is not a native Fedora sub-policy
+and makes no FIPS, BSI or EMPTY-policy claim.
