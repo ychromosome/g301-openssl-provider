@@ -10,7 +10,7 @@
 
 Name:           g301-openssl-provider
 Version:        0.1.0
-Release:        0.5.%{snapshot}git%{shortcommit}%{?dist}
+Release:        0.6.%{snapshot}git%{shortcommit}%{?dist}
 Summary:        Experimental G301 TLS record provider for OpenSSL
 License:        Apache-2.0
 URL:            https://github.com/ychromosome/g301-openssl-provider
@@ -41,18 +41,15 @@ package activates the provider but does not change Fedora's TLS cipher-suite
 or group preference. G301 is not standardized or FIPS validated.
 
 %package policy
-Summary:        System-wide G301 TLS cipher-suite policy overlay
+Summary:        G301 OpenSSL policy-fragment example
 BuildArch:      noarch
 Requires:       %{name} = %{version}-%{release}
-Requires:       crypto-policies-scripts
+# Rebuild once after upgrading from releases that installed a local.d file.
 Requires(posttrans): crypto-policies-scripts
-Requires(postun): crypto-policies-scripts
 
 %description policy
-Installing this package is an explicit experimental laboratory opt-in. It
-places G301 before Fedora's current TLS cipher-suite list and retains that list
-as fallback. This OpenSSL overlay is not a native Fedora sub-policy and makes no
-FIPS, BSI or EMPTY-policy claim.
+This laboratory package contains an inert OpenSSL policy-fragment example.
+It does not change the selected Fedora crypto policy.
 
 %prep
 %autosetup -n g301-openssl-provider-%{commit}/outer-tls
@@ -60,6 +57,7 @@ test "$(sha256sum SOURCE_MANIFEST.sha256 | awk '{ print $1 }')" = \
     %{source_manifest_sha256}
 sha256sum --strict --quiet -c SOURCE_MANIFEST.sha256
 install -pm 0644 %{SOURCE4} README.g301-policy
+install -pm 0644 %{SOURCE3} opensslcnf-zz-g301.config.example
 
 %build
 %if %{with tests}
@@ -80,8 +78,6 @@ install -Dpm 0755 %{__cmake_builddir}/g301.so \
     %{buildroot}%{provider_modulesdir}/g301.so
 install -Dpm 0644 %{SOURCE1} \
     %{buildroot}%{_sysconfdir}/pki/tls/openssl.d/g301-provider.conf
-install -Dpm 0644 %{SOURCE3} \
-    %{buildroot}%{_sysconfdir}/crypto-policies/local.d/opensslcnf-zz-g301.config
 
 %check
 %if %{with tests}
@@ -118,18 +114,15 @@ echo 'Fedora TLS cipher-suite and group preferences were not changed.'
 exit 0
 
 %files policy
-%config(noreplace) %{_sysconfdir}/crypto-policies/local.d/opensslcnf-zz-g301.config
-%doc README.g301-policy
+%doc README.g301-policy opensslcnf-zz-g301.config.example
 
 %posttrans policy
-echo 'WARNING: The G301 policy package is an explicit experimental laboratory opt-in.'
-echo 'It is not a native Fedora sub-policy and makes no FIPS, BSI or EMPTY-policy claim.'
-%{_bindir}/update-crypto-policies
-
-%postun policy
-if [ "$1" -eq 0 ]; then
-    %{_bindir}/update-crypto-policies
+if ! %{_bindir}/update-crypto-policies; then
+    echo 'error: failed to remove a previous G301 policy overlay' >&2
+    exit 1
 fi
+echo 'The G301 policy fragment is installed as inert documentation.'
+exit 0
 
 %changelog
 * Wed Sep 02 2026 Martin Wolf <mwolf@adiumentum.com> - 0.1.0-0.5.20260902git07da4c8
