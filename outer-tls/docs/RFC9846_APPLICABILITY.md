@@ -24,9 +24,10 @@ single-key, maximum-record-size comparison, not a fleet-wide failure bound.
 Directions and traffic-key epochs are separate scopes.
 
 The active six-field capability declares no usage-limit parameter. The
-provider enforces the conservative integer floor above within one cipher
-context. The supported libssl path uses one context per write-key epoch, but
-the provider cannot recognize a fresh context initialized with the same key.
-Decryption is not counted. IV changes, same-key reinstallation, retry, and
-failed or partial initialization do not reset a live context. The provider
-fails the record operation at exhaustion; it cannot initiate KeyUpdate.
+provider enforces the conservative integer floor above for one uninterrupted
+key installation in a cipher context. Installing another key resets the
+counter, including A-B-A reuse. The supported libssl path uses one such
+installation per write-key epoch; cross-context use is not tracked. Decryption
+is not counted. IV changes, same-key reinstallation, retry, and failed or
+partial initialization do not reset the active counter. The provider fails the
+record operation at exhaustion; it cannot initiate KeyUpdate.

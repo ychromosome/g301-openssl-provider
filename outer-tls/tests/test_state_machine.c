@@ -376,6 +376,16 @@ static int test_write_key_usage_limit(void)
     g301_test_cipher_freectx(ctx);
     ctx = NULL;
 
+    /* Generic EVP A-B-A rekeying creates three independent counter scopes. */
+    fixture_reset(&fixture);
+    ctx = new_outer(&fixture);
+    CHECK(ctx != NULL && g301_test_cipher_set_record_limit(ctx, UINT64_C(1)));
+    CHECK(complete_encrypt_record(ctx, key_a, iv_a));
+    CHECK(complete_encrypt_record(ctx, key_b, iv_b));
+    CHECK(complete_encrypt_record(ctx, key_a, iv_a));
+    g301_test_cipher_freectx(ctx);
+    ctx = NULL;
+
     fixture_reset(&fixture);
     ctx = new_outer(&fixture);
     CHECK(ctx != NULL && g301_test_cipher_set_record_limit(ctx, UINT64_C(3)));

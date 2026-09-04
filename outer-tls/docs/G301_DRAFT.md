@@ -88,15 +88,15 @@ Capability name: `TLS-CIPHERSUITE`. The descriptor contains exactly:
 The descriptor is a candidate for the separate OpenSSL provider-ciphersuite
 work. It is not part of upstream OpenSSL and the code point is private-use.
 It contains no usage-limit field. The provider permits at most 23,680,450
-encrypted records in one cipher context. IV-only initialization, reinstalling
-the same key, failed initialization, and retry do not reset the counter.
-Installing a different key does. A fresh context is a new counter scope.
-Decryption is not counted. `dupctx` is not
-advertised.
+encrypted records under one uninterrupted key installation in a cipher
+context. IV-only initialization, reinstalling the same key, failed
+initialization, and retry do not reset the counter. Installing another key
+does, including A-B-A reuse. A fresh context is a new scope. Decryption is not
+counted. `dupctx` is not advertised.
 
 For TLS 1.3, libssl owns record header AAD, nonce construction, traffic keys,
 directions, epochs, KeyUpdate, alerts, and connection close. G301 changes only
-the AEAD AAD from `A` to `M || A` and enforces the context-local ceiling.
+the AEAD AAD from `A` to `M || A` and enforces the active-installation ceiling.
 
 ## Claim boundary
 

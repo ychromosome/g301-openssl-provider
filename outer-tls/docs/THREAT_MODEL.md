@@ -14,7 +14,8 @@
   record framing, KeyUpdate, alerts, and connection close;
 - OpenSSL's default provider owns AES-256-GCM and tag verification;
 - the G301 provider owns exact manifest injection, its local EVP state, and
-  the encrypted-record budget for each write key;
+  the encrypted-record budget for each uninterrupted key installation; the
+  supported libssl path uses one such installation per write-key epoch;
 - the application owns peer authentication, authorization, replay-sensitive
   semantics, and any post-handshake protocol.
 
@@ -44,7 +45,8 @@ AES-GCM or protect against both peers making the same mistake.
 - no AAD after payload;
 - no tag release before successful encryption final;
 - no successful decryption final without a fresh current-record tag;
-- no encryption after 23,680,450 records in one provider cipher context;
+- no encryption after 23,680,450 records under one uninterrupted key
+  installation in a provider cipher context;
 - checked length conversion and output bounds;
 - fail-closed propagation of delegated failures;
 - child-library-context fetch restricted to `provider=default`;

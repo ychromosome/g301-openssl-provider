@@ -18,9 +18,11 @@ The provider also advertises one experimental TLS 1.3 descriptor:
 - security bits: 256.
 
 The descriptor has exactly six fields and no private usage-limit metadata.
-The provider refuses encryption after 23,680,450 records under one write key.
-Only a different key resets that counter. libssl still owns sequence numbers,
-nonces, traffic epochs, KeyUpdate, record framing, alerts, and connection close.
+The provider refuses encryption after 23,680,450 records under one
+uninterrupted key installation in a cipher context. Installing a different key
+starts a new counter; returning to an earlier key starts another. The supported
+libssl path uses one uninterrupted context per write-key epoch. libssl owns
+sequence numbers, nonces, KeyUpdate, framing, alerts, and connection close.
 
 Unmodified OpenSSL can load and exercise the EVP cipher and inspect the
 descriptor, but cannot negotiate it as a TLS suite. The separate

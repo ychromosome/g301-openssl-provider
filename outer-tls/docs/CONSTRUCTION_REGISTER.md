@@ -15,7 +15,7 @@ Date: 2026-08-25
 | Manifest encoding | G301 experimental profile | EIGENBAU | fixed-width table, no runtime parser |
 | TLS descriptor | OpenSSL #23093 design candidate | EXPERIMENTAL GLUE | six metadata fields; no record policy |
 | Random generation | OpenSSL/libssl owner | NOT USED BY CIPHER | none |
-| Record usage limit | RFC 9846 Section 5.5 | PARTIAL | cipher-context counter; 23,680,450 encrypted records; fresh same-key contexts are not linked |
+| Record usage limit | RFC 9846 Section 5.5 | PARTIAL | 23,680,450 encrypted records per uninterrupted key installation; another key, including A-B-A reuse, starts a new scope; libssl maps one scope to each write-key epoch |
 
 The two local construction choices exist only to bind the fixed public profile
 to each AEAD invocation and to expose that operation through EVP. Neither
