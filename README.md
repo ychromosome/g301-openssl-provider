@@ -10,7 +10,7 @@ Experimental local workspace for two deliberately separate components:
 The active work is confined to `outer-tls/`. It delegates AES-256-GCM to the
 OpenSSL default provider and authenticates one fixed 32-byte manifest before
 the caller-supplied AAD. It does not implement AES, GCM, TLS framing, nonce
-generation, record counters, KeyUpdate, or application policy.
+generation, KeyUpdate, or application policy.
 
 Current state:
 
