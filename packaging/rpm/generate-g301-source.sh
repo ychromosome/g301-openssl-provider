@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-commit=07da4c847e8d0fbd287159809ff1b21d21996239
-expected=18f24b523cd300344f5e19752d06651f66d28c0b780a7f8c484dad02c1d2d75b
+commit=267a171c9570b4a1f819879a4c881862a25188eb
+expected=5504a698ae69128ae5984f74cb2ac1c169fe38be860037edc8657b6aaa80894f
 repository=${1:?usage: generate-g301-source.sh G301_GIT_CHECKOUT [OUTPUT]}
 output=${2:-g301-openssl-provider-${commit}.tar.gz}
 

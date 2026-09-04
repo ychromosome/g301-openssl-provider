@@ -1,10 +1,10 @@
 %bcond_without tests
 
-%global commit 07da4c847e8d0fbd287159809ff1b21d21996239
-%global shortcommit 07da4c8
-%global snapshot 20260902
-%global source_manifest_sha256 aaeedaeffc6e570375d83335f7e01e3978b9d73ea6feb30cc5aac3cae92e8953
-%global openssl_fork_evr 1:4.1.0~dev.1-0.3.git7d9c89d%{?dist}
+%global commit 267a171c9570b4a1f819879a4c881862a25188eb
+%global shortcommit 267a171
+%global snapshot 20260904
+%global source_manifest_sha256 54a976e8240457856d420d5035a35f55aef948462850c9c604ad167166ddc63b
+%global openssl_fork_evr 1:4.1.0~dev.1-0.4.git9bbfc53%{?dist}
 %global provider_modulesdir %{_libdir}/ossl-modules
 %global __provides_exclude_from ^%{provider_modulesdir}/.*\.so$
 
@@ -125,6 +125,11 @@ echo 'The G301 policy fragment is installed as inert documentation.'
 exit 0
 
 %changelog
+* Fri Sep 04 2026 Martin Wolf <mwolf@adiumentum.com> - 0.1.0-0.6.20260904git267a171
+- Define the record limit per uninterrupted write-key installation
+- Ship the policy fragment as inert documentation
+- Require the OpenSSL SNI-fix RPM
+
 * Wed Sep 02 2026 Martin Wolf <mwolf@adiumentum.com> - 0.1.0-0.5.20260902git07da4c8
 - Exclude local Python cache files from the source inventory
 
