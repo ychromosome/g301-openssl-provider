@@ -12,7 +12,7 @@ lscpu
 rustc -Vv
 cargo -V
 openssl version -a
-sha256sum Cargo.lock
+sha256sum "$ROOT/../Cargo.lock"
 
 printf '%s\n' 'Indicative OpenSSL hardware ceiling; not a G301-overhead baseline:'
 openssl speed -seconds 3 -evp aes-256-gcm -aead
