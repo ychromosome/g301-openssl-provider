@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include <openssl/provider.h>
 
 #define WORKING_NAME "G301-AES-256-GCM-V1"
@@ -195,6 +196,25 @@ end:
     return ok;
 }
 
+/*
+ * OpenSSL 3.x reports an AEAD tag mismatch without touching the error queue.
+ * Since OpenSSL commit f7d2d2acef ("AEADs: add an error to the queue on tag
+ * mismatch") the inner GCM implementation queues PROV_R_BAD_DECRYPT, which
+ * the wrapper forwards unchanged.  Accept either outcome and nothing else.
+ */
+static int only_tag_mismatch_queued(void)
+{
+    unsigned long err = ERR_peek_error();
+
+    if (err == 0)
+        return 1;
+    if (ERR_GET_LIB(err) != ERR_LIB_PROV
+        || ERR_GET_REASON(err) != PROV_R_BAD_DECRYPT)
+        return 0;
+    (void)ERR_get_error();
+    return ERR_peek_error() == 0;
+}
+
 static int decrypt_wrapper(EVP_CIPHER *cipher, const KAT *kat,
     const unsigned char tag[16], unsigned char *plaintext)
 {
@@ -325,7 +345,7 @@ static int test_kats(EVP_CIPHER *wrapper, EVP_CIPHER *reference)
         memset(recovered, 0xa5, sizeof(recovered));
         ERR_clear_error();
         CHECK(!decrypt_wrapper(wrapper, &kats[i], bad_tag, recovered));
-        CHECK(ERR_peek_error() == 0);
+        CHECK(only_tag_mismatch_queued());
     }
     ok = 1;
 end:
